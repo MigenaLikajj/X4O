@@ -8,3 +8,4 @@ install/
 *.hi
 node_modules/
 package-lock.json
+.stack-work/
