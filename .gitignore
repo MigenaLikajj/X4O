@@ -1,0 +1,10 @@
+# Stack build artifacts
+.stack‑work/
+dist/
+install/
+
+# OS / Editor cruft
+*.o
+*.hi
+node_modules/
+package-lock.json
