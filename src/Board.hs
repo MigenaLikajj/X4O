@@ -68,3 +68,24 @@ opp :: Color -> Color
 opp Red = Yellow
 opp Yellow = Red
 opp x = x
+
+
+-- Ekstrakton katershet vertikale
+verticals :: Board -> [[Color]]
+verticals b = [ [board b ! (x, y + i) | i <- [0..3]]
+              | x <- [1..columns], y <- [1..(rows - 3)] ]
+
+-- Ekstrakton katershet horizontale
+horizontals :: Board -> [[Color]]
+horizontals b = [ [board b ! (x + i, y) | i <- [0..3]]
+                | x <- [1..(columns - 3)], y <- [1..rows] ]
+
+-- Ekstrakton katershet diagonale te djathta ( \ forma )
+rdiags :: Board -> [[Color]]
+rdiags b = [ [board b ! (x + i, y + i) | i <- [0..3]]
+           | x <- [1..(columns - 3)], y <- [1..(rows - 3)] ]
+
+-- Ekstrakton katershet diagonale te majta ( \ forma )
+ldiags :: Board -> [[Color]]
+ldiags b = [ [board b ! (x + i, y - i) | i <- [0..3]]
+           | x <- [1..(columns - 3)], y <- [4..rows] ]
