@@ -89,3 +89,25 @@ rdiags b = [ [board b ! (x + i, y + i) | i <- [0..3]]
 ldiags :: Board -> [[Color]]
 ldiags b = [ [board b ! (x + i, y - i) | i <- [0..3]]
            | x <- [1..(columns - 3)], y <- [4..rows] ]
+
+
+-- Kontrolli master i fitores duke kombinuar te 4 drejtimet
+checkWin :: Board -> Bool
+checkWin board = or [f board | f <- [checkWinCol, checkWinRow, checkWinDiagRight, checkWinDiagLeft]]
+
+-- Ndihmese e pergjithshme per te kontrolluar nese 4 copa me ngjyre te kundert jane ne nje rresht
+checkWin' :: (Board -> [[Color]]) -> Board -> Bool
+checkWin' f b = or $ map (and . map ((==) (opp $ color b))) $ f b
+
+-- Kontrolle specifike te kushteve te fitores
+checkWinCol :: Board -> Bool
+checkWinCol = checkWin' verticals
+
+checkWinRow :: Board -> Bool
+checkWinRow = checkWin' horizontals
+
+checkWinDiagRight :: Board -> Bool
+checkWinDiagRight = checkWin' rdiags
+
+checkWinDiagLeft :: Board -> Bool
+checkWinDiagLeft = checkWin' ldiags
