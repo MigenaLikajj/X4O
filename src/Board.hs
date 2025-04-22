@@ -13,7 +13,7 @@ module Board (
   initialBoard
 ) where
 
-import qualified Data.Map.Strict as Map (fromList)
+import qualified Data.Map.Strict as Map (insert, fromList)
 import Data.Map.Strict((!), Map)
 
 -- Dimensionet e board
@@ -25,10 +25,10 @@ type Column = Int
 type Row = Int
 type Coords = (Column, Row)  -- Koordinata ne board
 
--- Reprezenton gjendjen e nje cell te vetme ose rezultatin e lojes
+-- Numerimi per 3 ngjyrat dhe 4 mundesite e fitores
 data Color = Empty | Red | Yellow | Both deriving (Eq, Show)
 
--- Reprezenton gjendjen e te gjithe board te lojes
+-- Tabela eshte vetem nje liste 2-dimensionale me lartesi
 data Board = Board {
   board :: Map Coords Color,     
   heights :: Map Column Row,
@@ -43,3 +43,28 @@ initialBoard = Board {
   color = Red,
   winner = Empty
 }
+
+-- Kthen kolonat, rreshti me i larte i te cilave nuk eshte ende i mbushur
+possibleMoves :: Board -> [Column]
+possibleMoves b
+  | winner b /= Empty = []
+  | otherwise = [x | x <- [1..columns], (heights b ! x) /= rows]
+  where
+    heights' = heights b
+
+-- Perditeso tabelen
+makeMove :: Board -> Column -> Board
+makeMove b@Board{ heights = heights', color = c, board = board' } col =
+  let posMoves = possibleMoves b
+      curHeight = heights' ! col
+      nBoard = Map.insert (col, curHeight + 1) c board'
+      nHeights = Map.insert col (curHeight + 1) heights'
+  in if col `elem` posMoves
+     then b { board = nBoard, heights = nHeights, color = opp c }
+     else b
+
+
+opp :: Color -> Color
+opp Red = Yellow
+opp Yellow = Red
+opp x = x
