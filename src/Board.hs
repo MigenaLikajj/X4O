@@ -111,3 +111,44 @@ checkWinDiagRight = checkWin' rdiags
 
 checkWinDiagLeft :: Board -> Bool
 checkWinDiagLeft = checkWin' ldiags
+
+-- Calculate value of a particular board w.r.t to Color
+valuation :: Board -> Int
+valuation board = sum [f board | f <- [valuationCol, valuationRow, valuationDiagRight, valuationDiagLeft]]
+
+-- Calculate score of each quad set and return the sum
+valuation' :: (Board -> [[Color]]) -> Board -> Int
+valuation' f b = sum $ map (scoreQuad $ color b) $ f b
+
+valuationCol :: Board -> Int
+valuationCol = valuation' verticals
+
+valuationRow :: Board -> Int
+valuationRow = valuation' horizontals
+
+valuationDiagRight :: Board -> Int
+valuationDiagRight = valuation' rdiags
+
+valuationDiagLeft :: Board -> Int
+valuationDiagLeft = valuation' ldiags
+
+scoreQuad :: Color -> [Color] -> Int
+scoreQuad color colors = if (and [ c == Empty || c == color | c <- colors])
+                         then case (length $ filter (== color) colors) of 3 -> 1
+                                                                          _ -> 0
+                         else 0
+
+instance GamePosition Board where
+  moves :: Board -> [Board]
+  moves b = map (makeMove b) $ possibleMoves b
+
+  static :: Board -> Int
+  static b = if (checkWin b) then -100 else (valuation b) - (valuation b { color = opp (color b) })
+
+instance Show Board where
+  show :: Board -> String
+  show board' = let b = board board'
+                    strBoard = [[if z == Red then "R" else if z == Yellow then "Y" else " " | x <- [1..columns], let z = b ! (x, y)] | y <- [rows,(rows-1)..1]]
+                    rowSep = "\n" ++ (concat $ replicate columns "+---") ++ "+\n"
+                    output = intercalate rowSep $ map (\x ->"| " ++ (intercalate " | " x) ++ " |") strBoard
+                in rowSep ++ output ++ rowSep
