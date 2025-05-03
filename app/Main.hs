@@ -36,7 +36,7 @@ timeFunc :: Float -> Board -> IO Board
 timeFunc _ b = return b
 
 window :: Display
-window = InWindow "Connect 4 !!" (700, 600) (10, 10)
+window = InWindow "X4O !!" (700, 600) (10, 10)
 
 background :: Color
 background = dark blue

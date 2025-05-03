@@ -1,5 +1,4 @@
--- Board.hs
--- Definon strukturen dhe gjendjen fillestare te lojes Connect Four
+{-# LANGUAGE InstanceSigs #-}
 
 module Board (
   board,
@@ -10,96 +9,89 @@ module Board (
   Color (Empty, Red, Yellow, Both),
   Board (Board),
   Column,
-  initialBoard
-) where
+  initialBoard,
+  possibleMoves,
+  makeMove,
+  checkWin,
+  valuation,
+  opp
+  ) where
 
+import Data.List (intercalate, transpose)
 import qualified Data.Map.Strict as Map (insert, fromList)
 import Data.Map.Strict((!), Map)
 
--- Dimensionet e board
+import AI
+
 rows = 6
 columns = 7
 
--- Aliaset e tipeve per qartesi
 type Column = Int
 type Row = Int
-type Coords = (Column, Row)  -- Koordinata ne board
+type Coords = (Column, Row)
 
--- Numerimi per 3 ngjyrat dhe 4 mundesite e fitores
+-- Enumeration for the 3 Colors and 4 victory possibilities
 data Color = Empty | Red | Yellow | Both deriving (Eq, Show)
 
--- Tabela eshte vetem nje liste 2-dimensionale me lartesi
-data Board = Board {
-  board :: Map Coords Color,     
-  heights :: Map Column Row,
-  color :: Color,               
-  winner :: Color                
-}
+-- Board is just a 2 Dimensional List with heights
+data Board = Board { board :: (Map Coords Color)
+                   , heights :: (Map Column Row)
+                   , color :: Color
+                   , winner :: Color
+                   }
 
--- Krijon nje tabele te re bosh me te gjitha qelizat bosh dhe me lojtarin e kuq si fillestar.
-initialBoard = Board {
-  board = Map.fromList [ ((x, y), Empty) | x <- [1..columns], y <- [1..rows] ],
-  heights = Map.fromList [ (col, 0) | col <- [1..columns] ],
-  color = Red,
-  winner = Empty
-}
+initialBoard  = Board { board = (Map.fromList [ ((x, y), Empty) | x <- [1..columns], y <- [1..rows]])
+                      , heights = (Map.fromList [ (col, 0) | col <- [1..columns]])
+                      , color = Red
+                      , winner = Empty
+                      }
 
--- Kthen kolonat, rreshti me i larte i te cilave nuk eshte ende i mbushur
+-- Returns Columns whose topmost row is still not filled
 possibleMoves :: Board -> [Column]
 possibleMoves b
-  | winner b /= Empty = []
-  | otherwise = [x | x <- [1..columns], (heights b ! x) /= rows]
-  where
-    heights' = heights b
+  | checkWin b = []
+  | otherwise = [x | x <- [1..columns], (heights' ! x) /= rows]
+                where
+                  heights' = heights b
 
--- Perditeso tabelen
+-- Update the Board
 makeMove :: Board -> Column -> Board
 makeMove b@Board{ heights = heights', color = c, board = board' } col =
   let posMoves = possibleMoves b
       curHeight = heights' ! col
       nBoard = Map.insert (col, curHeight + 1) c board'
       nHeights = Map.insert col (curHeight + 1) heights'
-  in if col `elem` posMoves
+  in if (col `elem` posMoves)
      then b { board = nBoard, heights = nHeights, color = opp c }
      else b
 
-
 opp :: Color -> Color
-opp Red = Yellow
-opp Yellow = Red
-opp x = x
+opp c
+  | c == Red = Yellow
+  | c == Yellow = Red
 
 
--- Ekstrakton katershet vertikale
 verticals :: Board -> [[Color]]
-verticals b = [ [board b ! (x, y + i) | i <- [0..3]]
-              | x <- [1..columns], y <- [1..(rows - 3)] ]
+verticals b = [ [board b ! (x, y + i) | i <- [0..3]] | x <- [1..columns], y <- [1..(rows - 3)]]
 
--- Ekstrakton katershet horizontale
 horizontals :: Board -> [[Color]]
-horizontals b = [ [board b ! (x + i, y) | i <- [0..3]]
-                | x <- [1..(columns - 3)], y <- [1..rows] ]
+horizontals b = [ [board b ! (x + i, y) | i <- [0..3]] | x <- [1..(columns - 3)], y <- [1..rows]]
 
--- Ekstrakton katershet diagonale te djathta ( \ forma )
 rdiags :: Board -> [[Color]]
-rdiags b = [ [board b ! (x + i, y + i) | i <- [0..3]]
-           | x <- [1..(columns - 3)], y <- [1..(rows - 3)] ]
+rdiags b = [ [board b ! (x + i, y + i) | i <- [0..3]] | x <- [1..(columns - 3)], y <- [1..(rows - 3)]]
 
--- Ekstrakton katershet diagonale te majta ( \ forma )
 ldiags :: Board -> [[Color]]
-ldiags b = [ [board b ! (x + i, y - i) | i <- [0..3]]
-           | x <- [1..(columns - 3)], y <- [4..rows] ]
+ldiags b = [ [board b ! (x + i, y - i) | i <- [0..3]] | x <- [1..(columns - 3)], y <- [4..rows]]
 
-
--- Kontrolli master i fitores duke kombinuar te 4 drejtimet
+-- Check if a player of particular color has won
 checkWin :: Board -> Bool
 checkWin board = or [f board | f <- [checkWinCol, checkWinRow, checkWinDiagRight, checkWinDiagLeft]]
 
--- Ndihmese e pergjithshme per te kontrolluar nese 4 copa me ngjyre te kundert jane ne nje rresht
+-- check if any quad exists such that all elements of a quad are of the opposite color.
+-- If yes then the other player won and reached this state
 checkWin' :: (Board -> [[Color]]) -> Board -> Bool
 checkWin' f b = or $ map (and . map ((==) (opp $ color b))) $ f b
 
--- Kontrolle specifike te kushteve te fitores
 checkWinCol :: Board -> Bool
 checkWinCol = checkWin' verticals
 
