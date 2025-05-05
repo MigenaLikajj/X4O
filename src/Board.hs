@@ -65,6 +65,7 @@ makeMove b@Board{ heights = heights', color = c, board = board' } col =
      then b { board = nBoard, heights = nHeights, color = opp c }
      else b
 
+--Change the color of the next player based on the actual player
 opp :: Color -> Color
 opp c
   | c == Red = Yellow
@@ -103,7 +104,7 @@ checkWinDiagRight = checkWin' rdiags
 
 checkWinDiagLeft :: Board -> Bool
 checkWinDiagLeft = checkWin' ldiags
-
+--These are used only when the game is not won yet, to give the total of points
 -- Calculate value of a particular board w.r.t to Color
 valuation :: Board -> Int
 valuation board = sum [f board | f <- [valuationCol, valuationRow, valuationDiagRight, valuationDiagLeft]]
